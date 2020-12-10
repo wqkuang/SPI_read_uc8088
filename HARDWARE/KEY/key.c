@@ -3,7 +3,7 @@
 #include "sys.h" 
 #include "delay.h"
 
-u8 key0_flag = 0;
+
 
 //按键初始化函数
 void KEY_Init(void) //IO初始化

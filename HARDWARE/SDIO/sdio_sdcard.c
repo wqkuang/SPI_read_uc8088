@@ -108,8 +108,8 @@ SD_Error SD_Init(void)
 			clkdiv=SDIO_TRANSFER_CLK_DIV+6;	//V1.1/V2.0卡，设置最高72/12=6Mhz
 		}else clkdiv=SDIO_TRANSFER_CLK_DIV;	//SDHC等其他卡，设置最高72/6=12Mhz
 		SDIO_Clock_Set(clkdiv);				//设置时钟频率,SDIO时钟计算公式:SDIO_CK时钟=SDIOCLK/[clkdiv+2];其中,SDIOCLK固定为48Mhz 
-		//errorstatus=SD_SetDeviceMode(SD_DMA_MODE);	//设置为DMA模式
-		errorstatus=SD_SetDeviceMode(SD_POLLING_MODE);	//设置为查询模式
+		errorstatus=SD_SetDeviceMode(SD_DMA_MODE);	//设置为DMA模式
+		//errorstatus=SD_SetDeviceMode(SD_POLLING_MODE);	//设置为查询模式
  	}
 	return errorstatus;		 
 }
@@ -1572,7 +1572,7 @@ void SD_DMA_Config(u32*mbuf,u32 bufsize,u32 DMA_DIR)
 	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  //DMA通道x没有设置为内存到内存传输
 	DMA_Init(DMA2_Channel4, &DMA_InitStructure);  //根据DMA_InitStruct中指定的参数初始化DMA的通道USART1_Tx_DMA_Channel所标识的寄存器
 
-	DMA_Cmd(DMA2_Channel4, DISABLE ); //开启DMA2 通道4
+	DMA_Cmd(DMA2_Channel4, ENABLE ); //开启DMA2 通道4
 }   
 //读SD卡
 //buf:读数据缓存区

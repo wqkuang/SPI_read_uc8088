@@ -1,5 +1,5 @@
 #include "sys.h"
-#include "usart.h"	  
+#include "usart.h"	 
 ////////////////////////////////////////////////////////////////////////////////// 	 
 //如果使用ucos,则包括下面的头文件即可.
 #if SYSTEM_SUPPORT_OS
@@ -30,8 +30,11 @@
 //V1.5修改说明
 //1,增加了对UCOSII的支持
 ////////////////////////////////////////////////////////////////////////////////// 	  
- 
+
+u8 Res;
 u8 write_slow_flag = 0;
+
+
 
 //////////////////////////////////////////////////////////////////
 //加入以下代码,支持printf函数,而不需要选择use MicroLIB	  
@@ -129,37 +132,29 @@ void uart_init(u32 bound){
 
 void USART1_IRQHandler(void)                	//串口1中断服务程序
 	{
-	u8 Res;
+//	u8 Res;
 #if SYSTEM_SUPPORT_OS 		//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
 	OSIntEnter();    
 #endif
-	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断
 	{
 		Res =USART_ReceiveData(USART1);	//读取接收到的数据
 		
-		if(witch_BUF == 1)	//数据缓存到BUF1
+		if(witch_BUF)	//数据缓存到BUF1
 		{
-			if(USART_REC_LEN == USART_RX_cnt1)	//BUF1写满了（512个字节）
+			if(USART_REC_LEN == USART_RX_cnt1)	//BUF1写满了（2K个字节）
 			{
-				witch_BUF = 2;
-				//USART_RX_cnt2 = 0; 		主循环会将其清0
-				if (USART_RX_cnt2 != 0)
-					write_slow_flag = 1;
-				USART_RX_cnt2 = 0;
+				witch_BUF = 0;
 				USART_RX_BUF2[USART_RX_cnt2++] = Res;
 			}
 			else
 				USART_RX_BUF1[USART_RX_cnt1++] = Res;
     }
-		else if(witch_BUF == 2)
+		else
 		{
-			if(USART_REC_LEN == USART_RX_cnt2)	//BUF2写满了（512个字节）
+			if(USART_REC_LEN == USART_RX_cnt2)	//BUF2写满了（2K个字节）
 			{
 				witch_BUF = 1;
-				//USART_RX_cnt1 = 0;			主循环会将其清0
-				if (USART_RX_cnt1 != 0)
-					write_slow_flag = 1;
-				USART_RX_cnt1 = 0;
 				USART_RX_BUF1[USART_RX_cnt1++] = Res;
 			}
 			else

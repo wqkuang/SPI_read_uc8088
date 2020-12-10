@@ -9,6 +9,7 @@
 #include "ff.h"  
 #include "exfuns.h"    
 
+u8 key0_flag = 0;
  
 /************************************************
 程序功能，存储8088串口打印的数据到SD卡
@@ -112,10 +113,6 @@ BYTE WriteBuffer[] = "随便写到文件中123abc";         /* 写缓冲区*/
 		
 		if (key0_flag)	// 按键按下
 		{
-			/* 不再读写，关闭文件 */
-			f_close(&fnew);	
-			/* 不再使用文件系统，取消挂载文件系统 */
-			f_mount(NULL,"0:",1);
 			LED0 = 0;
 			LED1 = 0;
 			printf("文件保存成功\r\n");
@@ -125,42 +122,81 @@ BYTE WriteBuffer[] = "随便写到文件中123abc";         /* 写缓冲区*/
 				LED1 = ~LED1;
 			}
 		}
-		if (write_slow_flag)	// BUF中的数据没来得及写入SD卡
+//		if (write_slow_flag)	// BUF中的数据没来得及写入SD卡
+//		{
+//			/* 不再读写，关闭文件 */
+//			f_close(&fnew);	
+//			/* 不再使用文件系统，取消挂载文件系统 */
+//			f_mount(NULL,"0:",1);
+//			LED0 = 1;
+//			LED1 = 1;
+//			printf("读取BUF 太慢\r\n");
+//			while(1){
+//			}
+//		}
+		
+		// 如果写BUF2 已经写满
+		if(USART_RX_cnt2 == USART_REC_LEN){
+			res_flash = f_write(&fnew, USART_RX_BUF2, USART_REC_LEN, &fnum);
+			if (res_flash==FR_OK && fnum == USART_REC_LEN){
+				LED0 = 1;
+				LED1 = 0;
+				USART_RX_cnt2 = 0;
+			}
+			else
+				printf("！！文件写入失败：(res_flash = %d), fnum = %d\n",res_flash, fnum); 
+		}
+		else if(USART_RX_cnt1 == USART_REC_LEN){
+			res_flash = f_write(&fnew, USART_RX_BUF1, USART_REC_LEN, &fnum);
+			if (res_flash==FR_OK && fnum == USART_REC_LEN){
+				LED0 = 0;
+				LED1 = 1;
+				USART_RX_cnt1 = 0;
+			}
+			else
+				printf("！！文件写入失败：(res_flash = %d), fnum = %d\n",res_flash, fnum); 
+		}
+	} 
+}
+
+//外部中断0服务程序 
+void EXTI0_IRQHandler(void)
+{
+	delay_ms(10);//消抖
+	if(WK_UP==1)	 	 //WK_UP按键
+	{				 
+		if (key0_flag == 0)
 		{
 			/* 不再读写，关闭文件 */
 			f_close(&fnew);	
 			/* 不再使用文件系统，取消挂载文件系统 */
 			f_mount(NULL,"0:",1);
-			LED0 = 1;
-			LED1 = 1;
-			printf("读取BUF 太慢\r\n");
-			while(1){
-			}
 		}
-		// 如果现在在写BUF1 ， 且USART_RX_cnt2 已经写满
-		if((witch_BUF == 1) && (USART_RX_cnt2 == USART_REC_LEN)){
-			res_flash=f_write(&fnew, USART_RX_BUF2, USART_REC_LEN, &fnum);
-			if (fnum == USART_REC_LEN){
-				USART_RX_cnt2 = 0;
-				LED0 = 1;
-				LED1 = 0;
-				//printf("%c", USART_RX_BUF2[511]);
-			}
-			else
-				printf("！！文件写入失败：(%d)\n",res_flash); 
-		}
-		else if(witch_BUF == 2 && USART_RX_cnt1 == USART_REC_LEN){
-			res_flash=f_write(&fnew, USART_RX_BUF1, USART_REC_LEN, &fnum);
-			if (fnum == USART_REC_LEN){
-				USART_RX_cnt1 = 0;
-				LED0 = 0;
-				LED1 = 1;
-				//printf("%s", USART_RX_BUF1);
-			}
-			else
-				printf("！！文件写入失败：(%d)\n",res_flash); 
-		}
-	} 
+		
+		LED0 = 1;
+		LED1 = 1;
+		key0_flag = 1;
+	}
+	EXTI_ClearITPendingBit(EXTI_Line0); //清除LINE0上的中断标志位  
 }
 
-
+void EXTI4_IRQHandler(void)
+{
+	delay_ms(10);//消抖
+	if(KEY0==0)	 //按键KEY0
+	{
+		if (key0_flag == 0)
+		{
+			/* 不再读写，关闭文件 */
+			f_close(&fnew);	
+			/* 不再使用文件系统，取消挂载文件系统 */
+			f_mount(NULL,"0:",1);
+		}
+		
+		LED0=!LED0;
+		LED1=!LED1; 
+		key0_flag = 1;
+	}		 
+	EXTI_ClearITPendingBit(EXTI_Line4);  //清除LINE4上的中断标志位  
+}
+ 

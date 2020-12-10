@@ -51,29 +51,3 @@ void EXTIX_Init(void)
   	NVIC_Init(&NVIC_InitStructure);  	  //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
  
 }
-
-//外部中断0服务程序 
-void EXTI0_IRQHandler(void)
-{
-	delay_ms(10);//消抖
-	if(WK_UP==1)	 	 //WK_UP按键
-	{				 
-		LED0 = 1;
-		LED1 = 1;
-		key0_flag = 1;
-	}
-	EXTI_ClearITPendingBit(EXTI_Line0); //清除LINE0上的中断标志位  
-}
-
-void EXTI4_IRQHandler(void)
-{
-	delay_ms(10);//消抖
-	if(KEY0==0)	 //按键KEY0
-	{
-		LED0=!LED0;
-		LED1=!LED1; 
-		key0_flag = 1;
-	}		 
-	EXTI_ClearITPendingBit(EXTI_Line4);  //清除LINE4上的中断标志位  
-}
- 
