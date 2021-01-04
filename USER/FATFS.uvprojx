@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\DMA;..\MALLOC;..\HARDWARE\SD;..\FATFS\exfuns;..\FATFS\src;..\USMART;..\FATFS\src\option;..\HARDWARE\SDIO;..\HARDWARE\EXTI</IncludePath>
+              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\DMA;..\MALLOC;..\HARDWARE\SD;..\FATFS\exfuns;..\FATFS\src;..\USMART;..\FATFS\src\option;..\HARDWARE\SDIO;..\HARDWARE\EXTI;..\HARDWARE\uc8088;..\HARDWARE\SPI</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -421,6 +421,16 @@
               <FileName>exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\EXTI\exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>uc8088_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\uc8088\uc8088_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\SPI\spi.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -506,6 +516,11 @@
               <FileName>stm32f10x_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F10x_FWLib\src\stm32f10x_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\STM32F10x_FWLib\src\stm32f10x_spi.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -26,15 +26,11 @@
 //4,修改了EN_USART1_RX的使能方式
 //V1.5修改说明
 //1,增加了对UCOSII的支持
-#define USART_REC_LEN  		2048  	//定义最大接收字节数 2KB
+#define USART_REC_LEN  			200  	//定义最大接收字节数 200
 #define EN_USART1_RX 			1		//使能（1）/禁止（0）串口1接收
-
-extern u8 write_slow_flag;
-extern u8 USART_RX_BUF1[USART_REC_LEN]; //接收缓冲,最大USART_REC_LEN个字节.末字节为换行符 
-extern u8 USART_RX_BUF2[USART_REC_LEN]; //接收缓冲,最大USART_REC_LEN个字节.末字节为换行符
-extern u8 witch_BUF;       	//接收BUF选择1， 2
-extern u16 USART_RX_cnt1;		//BUF1接收数据个数（计数）	
-extern u16 USART_RX_cnt2;		//BUF2接收数据个数（计数）
+	  	
+extern u8  USART_RX_BUF[USART_REC_LEN]; //接收缓冲,最大USART_REC_LEN个字节.末字节为换行符 
+extern u16 USART_RX_STA;         		//接收状态标记	
 //如果想串口中断接收，请不要注释以下宏定义
 void uart_init(u32 bound);
 #endif
