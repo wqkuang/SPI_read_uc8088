@@ -11,7 +11,23 @@
 #include "uc8088_spi.h"
 
 u8 key0_flag = 0;
- 
+
+void ML302_init()
+{
+	printf("AT\r\n");			
+	delay_ms(10);
+	printf("AT+CPIN?\r\n");		//查询SIM卡状态
+	delay_ms(10);
+	printf("AT+CSQ\r\n");			//查询信号质量， 小于10说明信号差
+	delay_ms(10);
+	printf("AT+CGDCONT=1,\"IP\",\"CMIOT\"");		//设置APN
+	delay_ms(10);
+	printf("AT+CGACT=1,1");		//激活PDP
+	delay_ms(10);
+	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",42451\r\n");	//连接服务器
+	delay_ms(10);
+}
+
 /************************************************
 程序功能，存储8088串口打印的数据到SD卡
 ************************************************/
@@ -22,12 +38,13 @@ u8 key0_flag = 0;
 ////BYTE ReadBuffer[1024]={0};        /* 读缓冲区 */
 //BYTE WriteBuffer[] = "随便写到文件中123abc";         /* 写缓冲区*/
 u8 Buffer[SPI_BUF_LEN] = {0};
-
+u8 send_cmd[16] = "AT+MIPSEND=1,\0";
 int main(void)
  {	 
-	u8 one_char;
+	char num_char[4];
+	u8 one_char, first_flag=0;
 	u16 tmp, i;
-	u32 wp, rp;
+	u32 wp, rp, rrp;
 	delay_init();	    	 //延时函数初始化	  
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
 	uart_init(115200);	 	//串口初始化为115200	
@@ -47,24 +64,49 @@ int main(void)
 	 tmp = uc8088_read_u8(0x1a10701b);
 	printf("tmp = %x\r\n", tmp);
 	
-	wp = uc8088_read_u16(0x1a107018);
+	wp = uc8088_read_u16(Buf_addr);
 	printf("wp = %x\r\n", wp);
-	wp = uc8088_read_u16(0x1a107019);
+	wp = uc8088_read_u16(Buf_addr+2);
 	printf("wp = %x\r\n", wp);
 	wp = 0;
 
 	wp = uc8088_read_u32(Buf_addr);
 	rp = uc8088_read_u32(Buf_addr + 4);
 	printf("wp = %d,   rp = %d\r\n", wp, rp); 
-	LED0 = 0; 
+	LED0 = 0;
+	ML302_init();
+	wp = 0;
+	rp = 65536;
 	while(1){
-		wp = uc8088_read_u32(Buf_addr);
+		
 		rp = uc8088_read_u32(Buf_addr + 4);
-		
+		if (rp != rrp && first_flag)		//保证rp绝对正确
+		{
+			//printf("error rp = %d,  right rp = %d\r\n", rp, rrp);
+			continue;
+		}
+		wp = uc8088_read_u32(Buf_addr);
+		if (wp > SPI_BUF_LEN || wp < 8)		//避开0值，因为可能抢占失败返回0
+			continue;
+		//printf("rp = %d,   wp = %d\r\n", rp, wp);
 		if (rp < wp){
+			if (wp - rp < 16)
+				continue;
 			tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer, wp - rp);
+			if (tmp > SPI_BUF_LEN){
+				//printf("error1 : tmp = %d > SPI_BUF_LEN\r\n", tmp);
+				tmp = 0;
+				continue;
+			}
+			
 			if(tmp){
-				uc8088_write_u32(Buf_addr + 4, rp+tmp);
+				//printf("rp = %d,   wp = %d, 111  tmp = %d\r\n", rp, wp, tmp);
+				rrp = 65536;
+				do{
+					uc8088_write_u32(Buf_addr + 4, rp+tmp);
+					rrp = uc8088_read_u32(Buf_addr + 4);
+				}while(rrp != (rp+tmp));
+				
 				for(i=0; i<tmp; i+=4){
 					one_char = Buffer[i+3];
 					Buffer[i+3] = Buffer[i];
@@ -74,16 +116,33 @@ int main(void)
 					Buffer[i+1] = one_char;
 				}
 				Buffer[tmp] = '\0';
+				sprintf(num_char, "%d", tmp);
+				printf("%s%s\r\n", send_cmd, num_char);
+				rp = 65536;
 				printf("%s", Buffer);
-				//printf("rp = %d,   wp = %d,   i = %d\r\n", rp, wp, i);
 			}
 		}
-		else if((rp > wp)){
+		else if(rp > wp){
+			if (SPI_BUF_LEN - rp + wp < 16)
+				continue;
 			tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer, SPI_BUF_LEN - rp);
-			i = uc8088_read_memory(Buf_addr + 8, Buffer + SPI_BUF_LEN - rp, wp);
+			i = uc8088_read_memory(Buf_addr + 8, Buffer + tmp, wp);
+				
 			tmp += i;
+			if (tmp > SPI_BUF_LEN){
+				//printf("error2 : tmp = %d > SPI_BUF_LEN\r\n", tmp);
+				tmp = 0;
+				continue;
+			}
+			
 			if (tmp){
-				uc8088_write_u32(Buf_addr + 4, i);
+				//printf("rp = %d,   wp = %d, 222  tmp = %d\r\n", rp, wp, tmp);
+				rrp = 65536;
+				do{
+					uc8088_write_u32(Buf_addr + 4, i);
+					rrp = uc8088_read_u32(Buf_addr + 4);
+				}while(rrp != i);
+				
 				for(i=0; i<tmp; i+=4){
 					one_char = Buffer[i+3];
 					Buffer[i+3] = Buffer[i];
@@ -93,15 +152,17 @@ int main(void)
 					Buffer[i+1] = one_char;
 				}
 				Buffer[tmp] = '\0';
+				sprintf(num_char, "%d", tmp);
+				printf("%s%s\r\n", send_cmd, num_char);
+
+				rp = 65536;
 				printf("%s", Buffer);
-				//printf("rp = %d,   wp = %d,   i = %d\r\n", rp, wp, i+tmp);
 			}
 		}
-//		printf("wp = %d,   rp = %d\r\n", wp, rp);
 		LED0=!LED0;//DS0闪烁
-		Buffer[0] = '\0';
-		
-		delay_ms(50);
+//		Buffer[0] = '\0';
+		first_flag |= 0xff;
+		delay_ms(10);
 	}
  }
 
