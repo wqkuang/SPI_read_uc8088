@@ -28,10 +28,13 @@ Project File Date:  12/30/2020
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'FATFS'
 compiling main.c...
+main.c(47): warning:  #223-D: function "strstr" declared implicitly
+  	if (NULL == strstr(USART_RX_BUF, str_OK))
+main.c: 1 warning, 0 errors
 linking...
-Program Size: Code=16932 RO-data=376 RW-data=92 ZI-data=1051116  
+Program Size: Code=17288 RO-data=384 RW-data=96 ZI-data=1050944  
 FromELF: creating hex file...
-"..\OBJ\FATFS.axf" - 0 Error(s), 0 Warning(s).
+"..\OBJ\FATFS.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 

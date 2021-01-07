@@ -11,21 +11,66 @@
 #include "uc8088_spi.h"
 
 u8 key0_flag = 0;
+u8 Buffer[SPI_BUF_LEN] = {0};
+u8 send_cmd[16] = "AT+MIPSEND=1,\0";
+const char *str_OK="SEND OK";
 
 void ML302_init()
 {
 	printf("AT\r\n");			
 	delay_ms(10);
 	printf("AT+CPIN?\r\n");		//查询SIM卡状态
-	delay_ms(10);
+	delay_ms(50);
 	printf("AT+CSQ\r\n");			//查询信号质量， 小于10说明信号差
-	delay_ms(10);
-	printf("AT+CGDCONT=1,\"IP\",\"CMIOT\"");		//设置APN
-	delay_ms(10);
-	printf("AT+CGACT=1,1");		//激活PDP
-	delay_ms(10);
+	delay_ms(50);
+//	printf("AT+CGDCONT=1,\"IP\",\"CMIOT\"\r\n");		//设置APN
+//	delay_ms(10);
+	printf("AT+CGACT=1,1\r\n");		//激活PDP
+	delay_ms(100);
 	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",42451\r\n");	//连接服务器
+	delay_ms(100);
+	printf("ATE0\r\n");				//关闭回显
 	delay_ms(10);
+	memset(USART_RX_BUF, 0, USART_REC_LEN);
+	USART_RX_STA = 0;
+}
+
+
+int ML302_send_result()
+{
+	u32 time_out = 1e7;
+	while(time_out && !(USART_RX_STA & 0x8000))		//等待 ML302 返回发送结果
+	{	time_out--; LED1=!LED1;}
+	if(!time_out)
+		printf("***---%s---%x****", USART_RX_BUF, USART_RX_STA);
+	USART_RX_STA = 0;
+	if (NULL == strstr(USART_RX_BUF, str_OK))
+	{
+		delay_ms(1);
+		//printf("***---%s---%x****", USART_RX_BUF, USART_RX_STA);
+		memset(USART_RX_BUF, 0, USART_REC_LEN);
+		return -1;
+	}
+	else
+	{
+		memset(USART_RX_BUF, 0, USART_REC_LEN);
+		return 0;
+	}
+}
+
+void uart_send_data_2_ML302(u8 *TX_BUF, u16 len)
+{
+	char num_char[4];
+//	u16 t;
+	sprintf(num_char, "%d", len);
+	printf("%s%s\r\n", send_cmd, num_char);
+	TX_BUF[len] = '\0';
+	printf("%s", TX_BUF);
+//	for(t=0; t<len; t++)
+//	{
+//		USART_SendData(USART1, *(TX_BUF + t));//向串口1发送数据
+//		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
+//	}
 }
 
 /************************************************
@@ -37,11 +82,9 @@ void ML302_init()
 //UINT fnum;            					  /* 文件成功读写数量 */
 ////BYTE ReadBuffer[1024]={0};        /* 读缓冲区 */
 //BYTE WriteBuffer[] = "随便写到文件中123abc";         /* 写缓冲区*/
-u8 Buffer[SPI_BUF_LEN] = {0};
-u8 send_cmd[16] = "AT+MIPSEND=1,\0";
+
 int main(void)
- {	 
-	char num_char[4];
+{	 
 	u8 one_char, first_flag=0;
 	u16 tmp, i;
 	u32 wp, rp, rrp;
@@ -115,11 +158,13 @@ int main(void)
 					Buffer[i+2] = Buffer[i+1];
 					Buffer[i+1] = one_char;
 				}
-				Buffer[tmp] = '\0';
-				sprintf(num_char, "%d", tmp);
-				printf("%s%s\r\n", send_cmd, num_char);
+				//Buffer[tmp] = '\0';
+				
 				rp = 65536;
-				printf("%s", Buffer);
+				//printf("%s", Buffer);
+				do{
+					uart_send_data_2_ML302(Buffer, tmp);
+				}while(ML302_send_result());
 			}
 		}
 		else if(rp > wp){
@@ -151,22 +196,25 @@ int main(void)
 					Buffer[i+2] = Buffer[i+1];
 					Buffer[i+1] = one_char;
 				}
-				Buffer[tmp] = '\0';
-				sprintf(num_char, "%d", tmp);
-				printf("%s%s\r\n", send_cmd, num_char);
-
+				//Buffer[tmp] = '\0';
+				
 				rp = 65536;
-				printf("%s", Buffer);
+				//printf("%s", Buffer);
+				do{
+					uart_send_data_2_ML302(Buffer, tmp);
+				}while(ML302_send_result());
 			}
 		}
 		LED0=!LED0;//DS0闪烁
+		LED1=!LED1;
 //		Buffer[0] = '\0';
 		first_flag |= 0xff;
 		delay_ms(10);
 	}
- }
+	
+}
 
- 
+
 // 
 // int main(void)
 // {	 
