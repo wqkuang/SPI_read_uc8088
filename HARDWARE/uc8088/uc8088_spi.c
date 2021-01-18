@@ -49,10 +49,11 @@ void uc8088_init(void)
  *	Addr 最好是4的整数倍， 如果不是，uc8088硬件会向前取到4的整数倍的地址
  *	NumByteToRead 最好是4的整数倍, 如果不是, 本函数会丢掉最后余数字节
 ******************************************************************/
-u16 uc8088_read_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
+u16 uc8088_read_memory(u32 Addr, register u8* pBuffer, u16 NumByteToRead)
 {
 	u8 tmp, tmp2;
-	u16 i;
+	register u16 i;
+	
 	tmp = Addr % 4;
 	if (NumByteToRead < 4)
 		return 0;
@@ -73,6 +74,7 @@ u16 uc8088_read_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
 			*pBuffer++ = SPI2_ReadWriteByte(0XFF);
 	
 	SPI2_CS = 1;
+	delay_us(10);
 	return i;
 }
 
@@ -94,7 +96,7 @@ void uc8088_write_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
 			SPI2_ReadWriteByte(pBuffer[i]);   	//循环写
 	
 	SPI2_CS = 1;
-	delay_us(20);
+	delay_us(10);
 }
 
 
@@ -150,8 +152,9 @@ void uc8088_write_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
 //函数功能：写一个u32类型数据到地址addr
 void uc8088_write_u32(u32 addr, u32 wdata)
 {
-	int i;
+	register int i;
 	u8 wr_buf[9] = {0};
+	u8 *ptrWr = wr_buf;
 	
 	wr_buf[0] = WRITE_CMD;
 	wr_buf[1] = addr >> 24;
@@ -166,7 +169,7 @@ void uc8088_write_u32(u32 addr, u32 wdata)
 	
 	SPI2_CS = 0;
 	for(i=0; i<9; i++)
-		SPI2_ReadWriteByte(wr_buf[i]);
+		SPI2_ReadWriteByte(*ptrWr++);
 	
 	SPI2_CS = 1;
 	delay_us(20);
@@ -239,9 +242,10 @@ u16 uc8088_read_u16(u32 addr)
 //函数功能：读一个u32类型数据
 u32 uc8088_read_u32(u32 addr)
 {
-	int i;
+	register int i;
 	u8 wr_buf[5] = {0};
 	u8 read_buf[4] = {0};
+	u8 *ptrRd = read_buf, *ptrWr = wr_buf;
 	u32 read_data = 0;
 	 
 	wr_buf[0] = READ_CMD;
@@ -252,12 +256,12 @@ u32 uc8088_read_u32(u32 addr)
 	
 	SPI2_CS = 0;
 	for(i=0; i<5; i++)
-		SPI2_ReadWriteByte(wr_buf[i]);
+		SPI2_ReadWriteByte(*ptrWr++);
 	
 	for(i=0; i<4; i++)					// 发送demo
 		SPI2_ReadWriteByte(0xFF);
 	for(i=0; i<4; i++)
-		read_buf[i] = SPI2_ReadWriteByte(0xFF);
+		*ptrRd++ = SPI2_ReadWriteByte(0xFF);
 		
 	SPI2_CS = 1;
 	delay_us(20);

@@ -408,19 +408,9 @@
               <FilePath>..\HARDWARE\LED\led.c</FilePath>
             </File>
             <File>
-              <FileName>key.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\KEY\key.c</FilePath>
-            </File>
-            <File>
               <FileName>sdio_sdcard.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\SDIO\sdio_sdcard.c</FilePath>
-            </File>
-            <File>
-              <FileName>exti.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\EXTI\exti.c</FilePath>
             </File>
             <File>
               <FileName>uc8088_spi.c</FileName>

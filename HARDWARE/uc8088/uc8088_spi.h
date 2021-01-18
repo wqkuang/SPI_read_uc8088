@@ -38,7 +38,7 @@ typedef struct
 extern void* memset ( void * ptr, int value, size_t num );
 void uc8088_init(void);
 
-u16 uc8088_read_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead);	//读Num个Byte
+u16 uc8088_read_memory(u32 Addr, register u8* pBuffer, u16 NumByteToRead);	//读Num个Byte
 void uc8088_write_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead);	//写num个字节
 
 void uc8088_write_u8(u32 addr, u8 wdata);			//写一个字节

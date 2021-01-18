@@ -2,18 +2,36 @@
 #include "delay.h"
 #include "usart.h" 
 #include "led.h" 		 	 
-#include "key.h"     
-#include "exti.h"
+//#include "key.h"     
+//#include "exti.h"
 //#include "malloc.h"
 //#include "sdio_sdcard.h"     
 //#include "ff.h"  
 //#include "exfuns.h"    
 #include "uc8088_spi.h"
 
-u8 key0_flag = 0;
-u8 Buffer[SPI_BUF_LEN] = {0};
+//#include <string.h>
+
+u8 which_buf = 0, send_flag = 1;
+u8 Buffer[2][SPI_BUF_LEN] = {0};
 u8 send_cmd[16] = "AT+MIPSEND=1,\0";
-const char *str_OK="SEND OK";
+const char str_OK[]="SEND OK";
+
+void ByteChange(register u8 *pBuf, s16 len)
+{
+	register s16 i;
+	register u8 ucTmp;
+	
+	for(i = 0; i < len; i += 4)
+	{
+			ucTmp = pBuf[i+3];
+			pBuf[i+3] = pBuf[i];
+			pBuf[i] = ucTmp;
+			ucTmp = pBuf[i+2];
+			pBuf[i+2] = pBuf[i+1];
+			pBuf[i+1] = ucTmp;
+	}
+}
 
 void ML302_init()
 {
@@ -27,7 +45,7 @@ void ML302_init()
 //	delay_ms(10);
 	printf("AT+CGACT=1,1\r\n");		//激活PDP
 	delay_ms(100);
-	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",42451\r\n");	//连接服务器
+	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",33586\r\n");	//连接服务器
 	delay_ms(100);
 	printf("ATE0\r\n");				//关闭回显
 	delay_ms(10);
@@ -36,29 +54,29 @@ void ML302_init()
 }
 
 
-int ML302_send_result()
-{
-	u32 time_out = 1e7;
-	while(time_out && !(USART_RX_STA & 0x8000))		//等待 ML302 返回发送结果
-	{	time_out--; LED1=!LED1;}
-	if(!time_out)
-		printf("***---%s---%x****", USART_RX_BUF, USART_RX_STA);
-	USART_RX_STA = 0;
-	if (NULL == strstr(USART_RX_BUF, str_OK))
-	{
-		delay_ms(1);
-		//printf("***---%s---%x****", USART_RX_BUF, USART_RX_STA);
-		memset(USART_RX_BUF, 0, USART_REC_LEN);
-		return -1;
-	}
-	else
-	{
-		memset(USART_RX_BUF, 0, USART_REC_LEN);
-		return 0;
-	}
-}
+//int ML302_send_result()
+//{
+//	u32 time_out = 1e6;
+//	while(time_out && !(USART_RX_STA & 0x8000))		//等待 ML302 返回发送结果
+//	{	time_out--; LED1=!LED1;}
+//	if(!time_out)
+//		printf("***---%s---%x****", USART_RX_BUF, USART_RX_STA);
+//	USART_RX_STA = 0;
+//	if (NULL == strstr(USART_RX_BUF, str_OK))
+//	{
+//		delay_ms(1);
+//		printf("-*-*-*%s---%x*-*-*", USART_RX_BUF, USART_RX_STA);
+//		memset(USART_RX_BUF, 0, USART_REC_LEN);
+//		return -1;
+//	}
+//	else
+//	{
+//		memset(USART_RX_BUF, 0, USART_REC_LEN);
+//		return 0;
+//	}
+//}
 
-void uart_send_data_2_ML302(u8 *TX_BUF, u16 len)
+void uart_send_data_2_ML302(register u8 *TX_BUF, u16 len)
 {
 	char num_char[4];
 //	u16 t;
@@ -73,9 +91,6 @@ void uart_send_data_2_ML302(u8 *TX_BUF, u16 len)
 //	}
 }
 
-/************************************************
-程序功能，存储8088串口打印的数据到SD卡
-************************************************/
 //FATFS fs;													/* FatFs文件系统对象 */
 //FIL fnew;													/* 文件对象 */
 //FRESULT res_flash;                /* 文件操作结果 */
@@ -84,28 +99,20 @@ void uart_send_data_2_ML302(u8 *TX_BUF, u16 len)
 //BYTE WriteBuffer[] = "随便写到文件中123abc";         /* 写缓冲区*/
 
 int main(void)
-{	 
-	u8 one_char, first_flag=0;
-	u16 tmp, i;
+{		
+	u8  rp_OK, wp_OK, cnt, wp_stop_flag;
+	u16 tmp, tmp1, len, pos;
 	u32 wp, rp, rrp;
 	delay_init();	    	 //延时函数初始化	  
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
 	uart_init(115200);	 	//串口初始化为115200	
  	LED_Init();		  			//初始化与LED连接的硬件接口
-	KEY_Init();					//初始化按键
+	//KEY_Init();					//初始化按键
 	uc8088_init();		//8088初始化
 	
 	printf("halt cpu\t");
 	rp = uc8088_read_u32(0x1a107018);
 	printf("read test = %x\r\n", rp);
-	tmp = uc8088_read_u8(0x1a107018);
-	printf("tmp = %x\r\n", tmp);
-	tmp = uc8088_read_u8(0x1a107019);
-	printf("tmp = %x\r\n", tmp);
-	tmp = uc8088_read_u8(0x1a10701a);
-	printf("tmp = %x\r\n", tmp);
-	 tmp = uc8088_read_u8(0x1a10701b);
-	printf("tmp = %x\r\n", tmp);
 	
 	wp = uc8088_read_u16(Buf_addr);
 	printf("wp = %x\r\n", wp);
@@ -116,102 +123,125 @@ int main(void)
 	wp = uc8088_read_u32(Buf_addr);
 	rp = uc8088_read_u32(Buf_addr + 4);
 	printf("wp = %d,   rp = %d\r\n", wp, rp); 
-	LED0 = 0;
+	LED0 = 1;
 	ML302_init();
-	wp = 0;
-	rp = 65536;
+	wp = 65536;
+	rp = 0;
+	rrp = 0;
+	pos = 0;
+	wp_stop_flag = 0;
+
 	while(1){
 		
-		rp = uc8088_read_u32(Buf_addr + 4);
-		if (rp != rrp && first_flag)		//保证rp绝对正确
+		cnt = 0;	
+		do
 		{
-			//printf("error rp = %d,  right rp = %d\r\n", rp, rrp);
-			continue;
-		}
-		wp = uc8088_read_u32(Buf_addr);
-		if (wp > SPI_BUF_LEN || wp < 8)		//避开0值，因为可能抢占失败返回0
-			continue;
-		//printf("rp = %d,   wp = %d\r\n", rp, wp);
-		if (rp < wp){
-			if (wp - rp < 16)
-				continue;
-			tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer, wp - rp);
-			if (tmp > SPI_BUF_LEN){
-				//printf("error1 : tmp = %d > SPI_BUF_LEN\r\n", tmp);
-				tmp = 0;
-				continue;
+			if(rp == rrp)
+			{
+				rp_OK = 1;
+				break;
 			}
-			
-			if(tmp){
-				//printf("rp = %d,   wp = %d, 111  tmp = %d\r\n", rp, wp, tmp);
-				rrp = 65536;
-				do{
-					uc8088_write_u32(Buf_addr + 4, rp+tmp);
-					rrp = uc8088_read_u32(Buf_addr + 4);
-				}while(rrp != (rp+tmp));
-				
-				for(i=0; i<tmp; i+=4){
-					one_char = Buffer[i+3];
-					Buffer[i+3] = Buffer[i];
-					Buffer[i] = one_char;
-					one_char = Buffer[i+2];
-					Buffer[i+2] = Buffer[i+1];
-					Buffer[i+1] = one_char;
+			rp = uc8088_read_u32(Buf_addr + 4);
+			if(cnt++ > 5)
+			{
+				rp_OK = 0;
+				printf("read rp = %d is error!， right rp = %d\r\n", rp, rrp);
+				break;
+			}
+		}while(1);
+		
+		cnt = 0;
+		do
+		{
+			wp = uc8088_read_u32(Buf_addr);
+			if (wp < SPI_BUF_LEN)		
+			{
+				len = (rp <= wp) ? (wp - rp) : (SPI_BUF_LEN - rp + wp);
+				if (len < 64){
+					wp_OK = 0;
+					wp_stop_flag = 1;
 				}
-				//Buffer[tmp] = '\0';
-				
-				rp = 65536;
-				//printf("%s", Buffer);
-				do{
-					uart_send_data_2_ML302(Buffer, tmp);
-				}while(ML302_send_result());
+				else 
+					wp_OK = 1;
+				break;
 			}
-		}
-		else if(rp > wp){
-			if (SPI_BUF_LEN - rp + wp < 16)
-				continue;
-			tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer, SPI_BUF_LEN - rp);
-			i = uc8088_read_memory(Buf_addr + 8, Buffer + tmp, wp);
-				
-			tmp += i;
-			if (tmp > SPI_BUF_LEN){
-				//printf("error2 : tmp = %d > SPI_BUF_LEN\r\n", tmp);
-				tmp = 0;
-				continue;
+
+			if(cnt++ > 5)
+			{
+				wp_OK = 0;
+				printf("read wp = %d is error!\r\n", wp);
+				break;
 			}
-			
-			if (tmp){
-				//printf("rp = %d,   wp = %d, 222  tmp = %d\r\n", rp, wp, tmp);
-				rrp = 65536;
-				do{
-					uc8088_write_u32(Buf_addr + 4, i);
-					rrp = uc8088_read_u32(Buf_addr + 4);
-				}while(rrp != i);
-				
-				for(i=0; i<tmp; i+=4){
-					one_char = Buffer[i+3];
-					Buffer[i+3] = Buffer[i];
-					Buffer[i] = one_char;
-					one_char = Buffer[i+2];
-					Buffer[i+2] = Buffer[i+1];
-					Buffer[i+1] = one_char;
+		}while(1);
+		
+		if(rp_OK && wp_OK){
+			LED1 = 1;
+			tmp = 0;
+			cnt = 0;
+			do{
+				if (rp < wp){
+					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf] + pos, len);
+					tmp1 = rp+tmp;
+					pos += tmp;
 				}
-				//Buffer[tmp] = '\0';
+				else{
+					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf]+ pos, SPI_BUF_LEN - rp);
+					tmp1 = uc8088_read_memory(Buf_addr + 8, Buffer[which_buf]+ pos + tmp, wp);
+					tmp += tmp1;
+					pos += tmp;
+				}
 				
-				rp = 65536;
-				//printf("%s", Buffer);
+				if(cnt++ > 5)		//读取uc8088内存失败
+				{
+						printf("read memory is error!\r\n");
+						break;
+				}
+			}while(!tmp);
+			if(tmp)
+			{
+				cnt = 0;  	rp_OK=0;		wp_OK=0;  rrp = 65536;
 				do{
-					uart_send_data_2_ML302(Buffer, tmp);
-				}while(ML302_send_result());
+						uc8088_write_u32(Buf_addr + 4, tmp1);
+						rrp = uc8088_read_u32(Buf_addr + 4);
+						
+						if(cnt++ > 5)		//修改写指针失败
+						{
+							printf("write rp = %d, not eq %d, so is error!\r\n", rrp, tmp1);
+							break;
+						}
+				}while(rrp != tmp1);
 			}
 		}
-		LED0=!LED0;//DS0闪烁
-		LED1=!LED1;
-//		Buffer[0] = '\0';
-		first_flag |= 0xff;
-		delay_ms(10);
+		
+		if(pos > 3600)
+			send_flag = 1;
+		
+		//收到1KB以上内容就发给ML302
+		if(pos > 1024 && send_flag)
+		{
+			send_flag = 0;
+			LED0 = 0;			//灯亮  忙, STM32 不能读取uc8088, 故可能丢数据
+			ByteChange(Buffer[which_buf], pos);		//字节翻转
+//			cnt = 0;
+//			do{
+			uart_send_data_2_ML302(Buffer[which_buf], pos);
+			
+//				if (cnt++ > 5){
+//					printf("send to ML302 error\r\n");
+//					break;
+//				}
+//			}while(ML302_send_result());
+			LED0 = 1;
+			which_buf = !which_buf;
+			pos = 0;
+		}
+		
+		if(wp_stop_flag)
+		{
+			LED1 = 0;				//空闲
+		}
+		
 	}
-	
 }
 
 
