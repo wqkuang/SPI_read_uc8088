@@ -14,6 +14,7 @@
 
 u8 which_buf = 0, send_flag = 1;
 u8 Buffer[2][SPI_BUF_LEN] = {0};
+u16 str_len[2] = {0};
 u8 send_cmd[16] = "AT+MIPSEND=1,\0";
 const char str_OK[]="SEND OK";
 
@@ -101,7 +102,7 @@ void uart_send_data_2_ML302(register u8 *TX_BUF, u16 len)
 int main(void)
 {		
 	u8  rp_OK, wp_OK, cnt, wp_stop_flag;
-	u16 tmp, tmp1, len, pos;
+	u16 tmp, tmp1, len;
 	u32 wp, rp, rrp;
 	delay_init();	    	 //延时函数初始化	  
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
@@ -128,11 +129,14 @@ int main(void)
 	wp = 65536;
 	rp = 0;
 	rrp = 0;
-	pos = 0;
+
 	wp_stop_flag = 0;
 
 	while(1){
-		
+		if (send_flag == 2){
+			send_flag = 0;
+			uart_send_data_2_ML302(Buffer[!which_buf], str_len[!which_buf]);
+		}
 		cnt = 0;	
 		do
 		{
@@ -180,15 +184,15 @@ int main(void)
 			cnt = 0;
 			do{
 				if (rp < wp){
-					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf] + pos, len);
+					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf] + str_len[which_buf], len);
 					tmp1 = rp+tmp;
-					pos += tmp;
+					str_len[which_buf] += tmp;
 				}
 				else{
-					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf]+ pos, SPI_BUF_LEN - rp);
-					tmp1 = uc8088_read_memory(Buf_addr + 8, Buffer[which_buf]+ pos + tmp, wp);
+					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf]+ str_len[which_buf], SPI_BUF_LEN - rp);
+					tmp1 = uc8088_read_memory(Buf_addr + 8, Buffer[which_buf]+ str_len[which_buf] + tmp, wp);
 					tmp += tmp1;
-					pos += tmp;
+					str_len[which_buf] += tmp;
 				}
 				
 				if(cnt++ > 5)		//读取uc8088内存失败
@@ -213,18 +217,18 @@ int main(void)
 			}
 		}
 		
-		if(pos > 3600)
+		if(str_len[which_buf] > 3600)
 			send_flag = 1;
 		
 		//收到1KB以上内容就发给ML302
-		if(pos > 1024 && send_flag)
+		if(str_len[which_buf] > 1024 && send_flag == 1)
 		{
 			send_flag = 0;
 			LED0 = 0;			//灯亮  忙, STM32 不能读取uc8088, 故可能丢数据
-			ByteChange(Buffer[which_buf], pos);		//字节翻转
+			ByteChange(Buffer[which_buf], str_len[which_buf]);		//字节翻转
 //			cnt = 0;
 //			do{
-			uart_send_data_2_ML302(Buffer[which_buf], pos);
+			uart_send_data_2_ML302(Buffer[which_buf], str_len[which_buf]);
 			
 //				if (cnt++ > 5){
 //					printf("send to ML302 error\r\n");
@@ -233,7 +237,7 @@ int main(void)
 //			}while(ML302_send_result());
 			LED0 = 1;
 			which_buf = !which_buf;
-			pos = 0;
+			str_len[which_buf] = 0;
 		}
 		
 		if(wp_stop_flag)

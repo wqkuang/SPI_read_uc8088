@@ -143,11 +143,12 @@ void USART1_IRQHandler(void)                	//串口1中断服务程序
 		{
 			USART_RX_BUF[USART_RX_STA]=Res ;
 			if (strstr(USART_RX_BUF, "SEND OK"))
-			{
 				send_flag = 1;
-				USART_RX_STA=0;
-				memset(USART_RX_BUF, 0, USART_REC_LEN);
-			}
+			else
+				send_flag = 2;
+			
+			USART_RX_STA=0;
+			memset(USART_RX_BUF, 0, USART_REC_LEN);
 		}
 		else
 		{
