@@ -9,6 +9,7 @@
 //#include "ff.h"  
 //#include "exfuns.h"    
 #include "uc8088_spi.h"
+#include "wdg.h"
 
 //#include <string.h>
 
@@ -131,7 +132,7 @@ int main(void)
 	rrp = 0;
 
 	wp_stop_flag = 0;
-
+	IWDG_Init(5,625);    //与分频数为128,重载值为625,溢出时间为2s
 	while(1){
 		if (send_flag == 2){
 			send_flag = 0;
@@ -236,6 +237,7 @@ int main(void)
 //				}
 //			}while(ML302_send_result());
 			LED0 = 1;
+			IWDG_Feed();		//喂狗
 			which_buf = !which_buf;
 			str_len[which_buf] = 0;
 		}

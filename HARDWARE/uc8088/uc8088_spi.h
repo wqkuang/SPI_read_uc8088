@@ -10,29 +10,29 @@
 
 #define Buf_addr			(0x33ac00)
 #define SPI_BUF_LEN		(4096)
-typedef struct
-{
-	u32 sWrite;
-	u32 sRead;
-	u8 ucBuf[SPI_BUF_LEN];
-}STU_SPI_QUEUE;
+//typedef struct
+//{
+//	u32 sWrite;
+//	u32 sRead;
+//	u8 ucBuf[SPI_BUF_LEN];
+//}STU_SPI_QUEUE;
 
 
-typedef struct
-{
-  u8  cmd_type;
-  u8  cmd_data[32];
-}TracealyzerCommandType;
+//typedef struct
+//{
+//  u8  cmd_type;
+//  u8  cmd_data[32];
+//}TracealyzerCommandType;
 
-#define iRescvBufBaseAddr  (0x0033b490)	//this is the base address in spi device, it must be changed accordingly
-#define config_enable_Addr  (iRescvBufBaseAddr + 16)
-#define config_struct_Addr  (iRescvBufBaseAddr + 40)
+//#define iRescvBufBaseAddr  (0x0033b490)	//this is the base address in spi device, it must be changed accordingly
+//#define config_enable_Addr  (iRescvBufBaseAddr + 16)
+//#define config_struct_Addr  (iRescvBufBaseAddr + 40)
 
-#define buffer_head1_Addr  (iRescvBufBaseAddr + 104)
-#define buffer_head2_Addr  (iRescvBufBaseAddr + 116)
+//#define buffer_head1_Addr  (iRescvBufBaseAddr + 104)
+//#define buffer_head2_Addr  (iRescvBufBaseAddr + 116)
 
-#define buffer1_Addr  (iRescvBufBaseAddr + 132)
-#define buffer2_Addr  (iRescvBufBaseAddr + 132 + 2560)
+//#define buffer1_Addr  (iRescvBufBaseAddr + 132)
+//#define buffer2_Addr  (iRescvBufBaseAddr + 132 + 2560)
 
 
 extern void* memset ( void * ptr, int value, size_t num );

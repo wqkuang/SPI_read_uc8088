@@ -39,7 +39,7 @@ void uc8088_init(void)
 //		goto flag_config;
 //	}
 //	
-	uc8088_write_u32(config_enable_Addr, (uc8088_read_u32(config_enable_Addr)&(0x01ffffff))|(0x01<<24));
+//	uc8088_write_u32(config_enable_Addr, (uc8088_read_u32(config_enable_Addr)&(0x01ffffff))|(0x01<<24));
 	
 }
 
