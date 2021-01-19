@@ -36,3 +36,4 @@
 ..\obj\main.o: ..\HARDWARE\uc8088\uc8088_spi.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 ..\obj\main.o: ..\HARDWARE\WDG\wdg.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h

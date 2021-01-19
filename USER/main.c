@@ -11,13 +11,14 @@
 #include "uc8088_spi.h"
 #include "wdg.h"
 
+#include <stdbool.h>
 //#include <string.h>
-
-u8 which_buf = 0, send_flag = 1;
+volatile bool which_buf = 0;
+volatile u8  send_flag = 1;
+volatile u16 str_len[2] = {0};
 u8 Buffer[2][SPI_BUF_LEN] = {0};
-u16 str_len[2] = {0};
-u8 send_cmd[16] = "AT+MIPSEND=1,\0";
-const char str_OK[]="SEND OK";
+const char send_cmd[16] = "AT+MIPSEND=1,\0";
+//const char str_OK[]="SEND OK";
 
 void ByteChange(register u8 *pBuf, s16 len)
 {
@@ -93,6 +94,14 @@ void uart_send_data_2_ML302(register u8 *TX_BUF, u16 len)
 //	}
 }
 
+
+void Resend()
+{
+		printf("Resend\r\n");
+		send_flag = 0;
+		uart_send_data_2_ML302(Buffer[!which_buf], str_len[!which_buf]);
+}
+
 //FATFS fs;													/* FatFs文件系统对象 */
 //FIL fnew;													/* 文件对象 */
 //FRESULT res_flash;                /* 文件操作结果 */
@@ -102,9 +111,11 @@ void uart_send_data_2_ML302(register u8 *TX_BUF, u16 len)
 
 int main(void)
 {		
-	u8  rp_OK, wp_OK, cnt, wp_stop_flag;
-	u16 tmp, tmp1, len;
-	u32 wp, rp, rrp;
+	volatile u8  rp_OK, wp_OK, cnt, wp_stop_flag;
+	volatile u16 tmp, tmp1, len;
+	volatile u32 rrp;
+	u32 wp, rp;
+
 	delay_init();	    	 //延时函数初始化	  
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
 	uart_init(115200);	 	//串口初始化为115200	
@@ -115,12 +126,6 @@ int main(void)
 	printf("halt cpu\t");
 	rp = uc8088_read_u32(0x1a107018);
 	printf("read test = %x\r\n", rp);
-	
-	wp = uc8088_read_u16(Buf_addr);
-	printf("wp = %x\r\n", wp);
-	wp = uc8088_read_u16(Buf_addr+2);
-	printf("wp = %x\r\n", wp);
-	wp = 0;
 
 	wp = uc8088_read_u32(Buf_addr);
 	rp = uc8088_read_u32(Buf_addr + 4);
@@ -128,39 +133,22 @@ int main(void)
 	LED0 = 1;
 	ML302_init();
 	wp = 65536;
-	rp = 0;
-	rrp = 0;
+	rrp = rp;
 
 	wp_stop_flag = 0;
 	IWDG_Init(5,625);    //与分频数为128,重载值为625,溢出时间为2s
+	send_flag = 1;
 	while(1){
-		if (send_flag == 2){
-			send_flag = 0;
-			uart_send_data_2_ML302(Buffer[!which_buf], str_len[!which_buf]);
-		}
-		cnt = 0;	
-		do
-		{
-			if(rp == rrp)
-			{
-				rp_OK = 1;
-				break;
-			}
-			rp = uc8088_read_u32(Buf_addr + 4);
-			if(cnt++ > 5)
-			{
-				rp_OK = 0;
-				printf("read rp = %d is error!， right rp = %d\r\n", rp, rrp);
-				break;
-			}
-		}while(1);
+		if (send_flag == 2)
+			Resend();
 		
 		cnt = 0;
 		do
 		{
-			wp = uc8088_read_u32(Buf_addr);
-			if (wp < SPI_BUF_LEN)		
+			uc8088_read_2_u32(Buf_addr, &wp, &rp);
+			if (rp == rrp && wp < SPI_BUF_LEN)
 			{
+				rp_OK = 1;
 				len = (rp <= wp) ? (wp - rp) : (SPI_BUF_LEN - rp + wp);
 				if (len < 64){
 					wp_OK = 0;
@@ -174,52 +162,40 @@ int main(void)
 			if(cnt++ > 5)
 			{
 				wp_OK = 0;
-				printf("read wp = %d is error!\r\n", wp);
+				printf("rrp = %d,  rp = %d,  wp = %d!\r\n", rrp, rp, wp);
 				break;
 			}
 		}while(1);
 		
-		if(rp_OK && wp_OK){
+		if(rp_OK == 1 && wp_OK == 1){
 			LED1 = 1;
-			tmp = 0;
-			cnt = 0;
-			do{
-				if (rp < wp){
-					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf] + str_len[which_buf], len);
-					tmp1 = rp+tmp;
-					str_len[which_buf] += tmp;
-				}
-				else{
-					tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf]+ str_len[which_buf], SPI_BUF_LEN - rp);
-					tmp1 = uc8088_read_memory(Buf_addr + 8, Buffer[which_buf]+ str_len[which_buf] + tmp, wp);
-					tmp += tmp1;
-					str_len[which_buf] += tmp;
-				}
-				
-				if(cnt++ > 5)		//读取uc8088内存失败
-				{
-						printf("read memory is error!\r\n");
-						break;
-				}
-			}while(!tmp);
-			if(tmp)
-			{
-				cnt = 0;  	rp_OK=0;		wp_OK=0;  rrp = 65536;
-				do{
-						uc8088_write_u32(Buf_addr + 4, tmp1);
-						rrp = uc8088_read_u32(Buf_addr + 4);
-						
-						if(cnt++ > 5)		//修改写指针失败
-						{
-							printf("write rp = %d, not eq %d, so is error!\r\n", rrp, tmp1);
-							break;
-						}
-				}while(rrp != tmp1);
+			printf("rp_OK = %d, wp_OK = %d, rpp = %d,  rp = %d,  wp = %d\r\n",rp_OK, wp_OK, rrp, rp, wp);
+			
+			if (rp < wp){
+				tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf] + str_len[which_buf], len);
+				tmp1 = rp+tmp;
+				str_len[which_buf] += tmp;
 			}
+			else{
+				tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf]+ str_len[which_buf], SPI_BUF_LEN - rp);
+				tmp1 = uc8088_read_memory(Buf_addr + 8, Buffer[which_buf]+ str_len[which_buf] + tmp, wp);
+				tmp += tmp1;
+				str_len[which_buf] += tmp;
+			}
+			
+			cnt = 0;  	rp_OK=0;		wp_OK=0;  rrp = 65536;
+			
+			do{
+					uc8088_write_u32(Buf_addr + 4, tmp1);
+					rrp = uc8088_read_u32(Buf_addr + 4);
+					
+					if(cnt++ > 5)		//修改读指针失败
+					{
+						printf("write rp = %d, not eq %d, so is error!\r\n", rrp, tmp1);
+						break;
+					}
+			}while(rrp != tmp1);
 		}
-		
-		if(str_len[which_buf] > 3600)
-			send_flag = 1;
 		
 		//收到1KB以上内容就发给ML302
 		if(str_len[which_buf] > 1024 && send_flag == 1)
@@ -237,14 +213,17 @@ int main(void)
 //				}
 //			}while(ML302_send_result());
 			LED0 = 1;
-			IWDG_Feed();		//喂狗
 			which_buf = !which_buf;
 			str_len[which_buf] = 0;
+			memset(Buffer[which_buf], 0, SPI_BUF_LEN);
+			IWDG_Feed();		//喂狗
 		}
 		
 		if(wp_stop_flag)
 		{
 			LED1 = 0;				//空闲
+			wp_stop_flag = 0;
+			IWDG_Feed();		//喂狗
 		}
 		
 	}

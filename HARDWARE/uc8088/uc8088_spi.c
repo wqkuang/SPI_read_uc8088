@@ -49,16 +49,16 @@ void uc8088_init(void)
  *	Addr 最好是4的整数倍， 如果不是，uc8088硬件会向前取到4的整数倍的地址
  *	NumByteToRead 最好是4的整数倍, 如果不是, 本函数会丢掉最后余数字节
 ******************************************************************/
-u16 uc8088_read_memory(u32 Addr, register u8* pBuffer, u16 NumByteToRead)
+u16 uc8088_read_memory(const u32 Addr, register u8* pBuffer, u16 NumByteToRead)
 {
-	u8 tmp, tmp2;
+	u8 temp, temp2;
 	register u16 i;
 	
-	tmp = Addr % 4;
+	temp = Addr % 4;
 	if (NumByteToRead < 4)
 		return 0;
 	else
-		tmp2 = (NumByteToRead - (4 - tmp)) % 4;
+		temp2 = (NumByteToRead - (4 - temp)) % 4;
 		
 	SPI2_CS = 0;
 	SPI2_ReadWriteByte(READ_CMD);							//发读命令
@@ -67,10 +67,10 @@ u16 uc8088_read_memory(u32 Addr, register u8* pBuffer, u16 NumByteToRead)
   SPI2_ReadWriteByte((u8)((Addr) >> 8));   
   SPI2_ReadWriteByte((u8)Addr); 
 	
-	for(i=0; i<4 + tmp; i++)									// 发送demo 和 挤出前面的字节
+	for(i=0; i<4 + temp; i++)									// 发送demo 和 挤出前面的字节
 		SPI2_ReadWriteByte(0xFF);
 	
-	for(i=0; i<NumByteToRead - tmp2; i++)						//循环读数
+	for(i=0; i<NumByteToRead - temp2; i++)						//循环读数
 			*pBuffer++ = SPI2_ReadWriteByte(0XFF);
 	
 	SPI2_CS = 1;
@@ -78,7 +78,7 @@ u16 uc8088_read_memory(u32 Addr, register u8* pBuffer, u16 NumByteToRead)
 	return i;
 }
 
-void uc8088_write_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
+void uc8088_write_memory(const u32 Addr, u8* pBuffer, u16 NumByteToRead)
 {
 	u16 i;
 	if (NumByteToRead < 1)
@@ -102,7 +102,7 @@ void uc8088_write_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
 
 
 ////函数功能：写一个u8类型数据到地址addr
-//void uc8088_write_u8(u32 addr, u8 wdata)
+//void uc8088_write_u8(const u32 addr, u8 wdata)
 //{
 //	int i;
 //	u8 wr_buf[6] = {0};
@@ -124,7 +124,7 @@ void uc8088_write_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
 //}
 
 ////函数功能：写一个u16类型数据到地址addr
-//void uc8088_write_u16(u32 addr, u16 wdata)
+//void uc8088_write_u16(const u32 addr, u16 wdata)
 //{
 //	int i;
 //	u8 wr_buf[7] = {0};
@@ -150,7 +150,7 @@ void uc8088_write_memory(u32 Addr, u8* pBuffer, u16 NumByteToRead)
 //}
 
 //函数功能：写一个u32类型数据到地址addr
-void uc8088_write_u32(u32 addr, u32 wdata)
+void uc8088_write_u32(const u32 addr, u32 wdata)
 {
 	register int i;
 	u8 wr_buf[9] = {0};
@@ -176,13 +176,13 @@ void uc8088_write_u32(u32 addr, u32 wdata)
 }
 
 //函数功能：读一个u8类型数据
-u8 uc8088_read_u8(u32 addr)
+u8 uc8088_read_u8(const u32 addr)
 {
-	int i, tmp;
+	int i, temp;
 	u8 wr_buf[5] = {0};
 	u8 read_data = 0;
 	
-	tmp = addr % 4;
+	temp = addr % 4;
 	
 	wr_buf[0] = READ_CMD;
 	wr_buf[1] = addr >> 24;
@@ -194,7 +194,7 @@ u8 uc8088_read_u8(u32 addr)
 	for(i=0; i<5; i++)								// 发送命令 和 地址
 		SPI2_ReadWriteByte(wr_buf[i]);
 	
-	for(i=0; i<4 + tmp; i++)					// 发送demo 和 挤出前面的字节
+	for(i=0; i<4 + temp; i++)					// 发送demo 和 挤出前面的字节
 		SPI2_ReadWriteByte(0xFF);
 
 	read_data = SPI2_ReadWriteByte(0xFF);
@@ -205,14 +205,14 @@ u8 uc8088_read_u8(u32 addr)
 }
 
 //函数功能：读一个u16类型数据
-u16 uc8088_read_u16(u32 addr)
+u16 uc8088_read_u16(const u32 addr)
 {
-	int i, tmp;
+	int i, temp;
 	u8 wr_buf[5] = {0};
 	u8 read_buf[2] = {0};
 	u16 read_data = 0xffff;
 	
-	tmp = addr % 4;
+	temp = addr % 4;
 
 	wr_buf[0] = READ_CMD;
 	wr_buf[1] = addr >> 24;
@@ -224,7 +224,7 @@ u16 uc8088_read_u16(u32 addr)
 	for(i=0; i<5; i++)								// 发送命令 和 地址
 		SPI2_ReadWriteByte(wr_buf[i]);
 	
-	for(i=0; i<4 + tmp; i++)					// 发送demo 和 挤出前面的字节
+	for(i=0; i<4 + temp; i++)					// 发送demo 和 挤出前面的字节
 		SPI2_ReadWriteByte(0xFF);
 	
 	read_buf[0] = SPI2_ReadWriteByte(0xFF);
@@ -240,7 +240,7 @@ u16 uc8088_read_u16(u32 addr)
 }
 
 //函数功能：读一个u32类型数据
-u32 uc8088_read_u32(u32 addr)
+u32 uc8088_read_u32(const u32 addr)
 {
 	register int i;
 	u8 wr_buf[5] = {0};
@@ -273,4 +273,39 @@ u32 uc8088_read_u32(u32 addr)
 	return read_data;
 }
 
-
+//函数功能：读两个u32类型数据
+void uc8088_read_2_u32(const u32 addr, u32* r1, u32* r2)
+{
+	register int i;
+	u8 wr_buf[5] = {0};
+	u8 read_buf[8] = {0};
+	u8 *ptrRd = read_buf, *ptrWr = wr_buf;
+	
+	 
+	wr_buf[0] = READ_CMD;
+	wr_buf[1] = addr >> 24;
+	wr_buf[2] = addr >> 16;
+	wr_buf[3] = addr >> 8;
+	wr_buf[4] = addr;
+	
+	SPI2_CS = 0;
+	for(i=0; i<5; i++)
+		SPI2_ReadWriteByte(*ptrWr++);
+	
+	for(i=0; i<4; i++)					// 发送demo
+		SPI2_ReadWriteByte(0xFF);
+	for(i=0; i<8; i++)
+		*ptrRd++ = SPI2_ReadWriteByte(0xFF);
+		
+	SPI2_CS = 1;
+	delay_us(20);
+	*r2 = 	 read_buf[7] 
+				| (read_buf[6] << 8)
+				| (read_buf[5] << 16) 
+				| (read_buf[4] << 24);
+							
+	*r1 =		read_buf[3]
+				| (read_buf[2] << 8)
+				| (read_buf[1] << 16) 
+				| (read_buf[0] << 24);
+}
