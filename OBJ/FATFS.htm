@@ -3,9 +3,9 @@
 <title>Static Call Graph - [..\OBJ\FATFS.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image ..\OBJ\FATFS.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Tue Jan 19 18:32:39 2021
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Wed Jan 20 15:04:10 2021
 <BR><P>
-<H3>Maximum Stack Usage =        200 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        192 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 __rt_entry_main &rArr; main &rArr; Resend &rArr; uart_send_data_2_ML302 &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 <P>
@@ -241,7 +241,7 @@ Global Symbols
 <P><STRONG><a name="[cf]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[5d]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 200 + Unknown Stack Size
+<BR><BR>[Stack]<UL><LI>Max Depth = 192 + Unknown Stack Size
 <LI>Call Chain = __rt_entry_main &rArr; main &rArr; Resend &rArr; uart_send_data_2_ML302 &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -264,7 +264,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_sys_exit
 </UL>
 
-<P><STRONG><a name="[75]"></a>ByteChange</STRONG> (Thumb, 44 bytes, Stack size 12 bytes, main.o(.text))
+<P><STRONG><a name="[74]"></a>ByteChange</STRONG> (Thumb, 44 bytes, Stack size 12 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = ByteChange
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -302,11 +302,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[5e]"></a>main</STRONG> (Thumb, 750 bytes, Stack size 48 bytes, main.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 200 + Unknown Stack Size
+<P><STRONG><a name="[5e]"></a>main</STRONG> (Thumb, 736 bytes, Stack size 40 bytes, main.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 192 + Unknown Stack Size
 <LI>Call Chain = main &rArr; Resend &rArr; uart_send_data_2_ML302 &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
-<BR>[Calls]<UL><LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_u32
+<BR>[Calls]<UL><LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_u32
 <LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_u32
 <LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_memory
 <LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_2_u32
@@ -320,8 +320,7 @@ Global Symbols
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Resend
 <LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uart_send_data_2_ML302
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ML302_init
-<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ByteChange
-<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
+<LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ByteChange
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
@@ -401,7 +400,7 @@ Global Symbols
 <LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI2_ReadWriteByte
 </UL>
 
-<P><STRONG><a name="[74]"></a>uc8088_write_u32</STRONG> (Thumb, 108 bytes, Stack size 32 bytes, uc8088_spi.o(.text))
+<P><STRONG><a name="[75]"></a>uc8088_write_u32</STRONG> (Thumb, 108 bytes, Stack size 32 bytes, uc8088_spi.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = uc8088_write_u32 &rArr; SPI2_ReadWriteByte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;delay_us
@@ -449,7 +448,7 @@ Global Symbols
 <LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_u16
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_u8
 <LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_memory
-<LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_u32
+<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_u32
 <LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_u32
 <LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_memory
 <LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_2_u32
@@ -510,7 +509,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_u16
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_u8
 <LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_memory
-<LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_u32
+<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_write_u32
 <LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_u32
 <LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_memory
 <LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uc8088_read_2_u32
@@ -1127,7 +1126,6 @@ Global Symbols
 
 <P><STRONG><a name="[67]"></a>__aeabi_memclr</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_memclr.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USART1_IRQHandler
-<LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ML302_init
 </UL>
 

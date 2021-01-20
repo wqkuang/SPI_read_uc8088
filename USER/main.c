@@ -41,15 +41,15 @@ void ML302_init()
 	printf("AT\r\n");			
 	delay_ms(10);
 	printf("AT+CPIN?\r\n");		//查询SIM卡状态
-	delay_ms(50);
+	delay_ms(10);
 	printf("AT+CSQ\r\n");			//查询信号质量， 小于10说明信号差
-	delay_ms(50);
+	delay_ms(10);
 //	printf("AT+CGDCONT=1,\"IP\",\"CMIOT\"\r\n");		//设置APN
 //	delay_ms(10);
 	printf("AT+CGACT=1,1\r\n");		//激活PDP
-	delay_ms(100);
-	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",33586\r\n");	//连接服务器
-	delay_ms(100);
+	delay_ms(20);
+	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",45715\r\n");	//连接服务器
+	delay_ms(20);
 	printf("ATE0\r\n");				//关闭回显
 	delay_ms(10);
 	memset(USART_RX_BUF, 0, USART_REC_LEN);
@@ -140,8 +140,8 @@ int main(void)
 	send_flag = 1;
 	while(1){
 		if (send_flag == 2)
-			Resend();
-		
+				Resend();
+
 		cnt = 0;
 		do
 		{
@@ -154,6 +154,8 @@ int main(void)
 					wp_OK = 0;
 					wp_stop_flag = 1;
 				}
+				else if((len + str_len[which_buf]) > 4096)
+					wp_OK = 0;
 				else 
 					wp_OK = 1;
 				break;
@@ -169,7 +171,7 @@ int main(void)
 		
 		if(rp_OK == 1 && wp_OK == 1){
 			LED1 = 1;
-			printf("rp_OK = %d, wp_OK = %d, rpp = %d,  rp = %d,  wp = %d\r\n",rp_OK, wp_OK, rrp, rp, wp);
+			//printf("rp_OK = %d, wp_OK = %d, rpp = %d,  rp = %d,  wp = %d\r\n",rp_OK, wp_OK, rrp, rp, wp);
 			
 			if (rp < wp){
 				tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf] + str_len[which_buf], len);
@@ -182,6 +184,8 @@ int main(void)
 				tmp += tmp1;
 				str_len[which_buf] += tmp;
 			}
+			
+			ByteChange(Buffer[which_buf] + str_len[which_buf] - tmp, tmp);		//字节翻转
 			
 			cnt = 0;  	rp_OK=0;		wp_OK=0;  rrp = 65536;
 			
@@ -200,9 +204,9 @@ int main(void)
 		//收到1KB以上内容就发给ML302
 		if(str_len[which_buf] > 1024 && send_flag == 1)
 		{
-			send_flag = 0;
-			LED0 = 0;			//灯亮  忙, STM32 不能读取uc8088, 故可能丢数据
-			ByteChange(Buffer[which_buf], str_len[which_buf]);		//字节翻转
+//			send_flag = 0;
+//			LED0 = 0;			//灯亮  忙, STM32 不能读取uc8088, 故可能丢数据
+//			ByteChange(Buffer[which_buf], str_len[which_buf]);		//字节翻转
 //			cnt = 0;
 //			do{
 			uart_send_data_2_ML302(Buffer[which_buf], str_len[which_buf]);
@@ -212,10 +216,11 @@ int main(void)
 //					break;
 //				}
 //			}while(ML302_send_result());
-			LED0 = 1;
+//			LED0 = 1;
+			send_flag = 0;
 			which_buf = !which_buf;
 			str_len[which_buf] = 0;
-			memset(Buffer[which_buf], 0, SPI_BUF_LEN);
+//			memset(Buffer[which_buf], 0, SPI_BUF_LEN);
 			IWDG_Feed();		//喂狗
 		}
 		

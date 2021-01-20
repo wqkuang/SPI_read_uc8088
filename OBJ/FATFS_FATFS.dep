@@ -1,6 +1,6 @@
 Dependencies for Project 'FATFS', Target 'FATFS': (DO NOT MODIFY !)
 CompilerVersion: 5060750::V5.06 update 6 (build 750)::ARMCC
-F (.\main.c)(0x6006B543)(-c --cpu Cortex-M3 -g -O0 --apcs=interwork -I ..\HARDWARE\LED -I ..\SYSTEM\delay -I ..\SYSTEM\sys -I ..\SYSTEM\usart -I ..\USER -I ..\STM32F10x_FWLib\inc -I ..\CORE -I ..\HARDWARE\KEY -I ..\HARDWARE\RTC -I ..\HARDWARE\RTC -I ..\HARDWARE\WKUP -I ..\HARDWARE\DMA -I ..\MALLOC -I ..\HARDWARE\uc8088 -I ..\HARDWARE\SPI -I ..\HARDWARE\WDG-I.\RTE\_FATFS-IC:\Users\kwq\AppData\Local\Arm\Packs\Keil\STM32F1xx_DFP\2.3.0\Device\Include-IC:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="529" -DSTM32F10X_HD -DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
+F (.\main.c)(0x6007D5E6)(-c --cpu Cortex-M3 -g -O0 --apcs=interwork -I ..\HARDWARE\LED -I ..\SYSTEM\delay -I ..\SYSTEM\sys -I ..\SYSTEM\usart -I ..\USER -I ..\STM32F10x_FWLib\inc -I ..\CORE -I ..\HARDWARE\KEY -I ..\HARDWARE\RTC -I ..\HARDWARE\RTC -I ..\HARDWARE\WKUP -I ..\HARDWARE\DMA -I ..\MALLOC -I ..\HARDWARE\uc8088 -I ..\HARDWARE\SPI -I ..\HARDWARE\WDG-I.\RTE\_FATFS-IC:\Users\kwq\AppData\Local\Arm\Packs\Keil\STM32F1xx_DFP\2.3.0\Device\Include-IC:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="529" -DSTM32F10X_HD -DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
 I (..\SYSTEM\sys\sys.h)(0x5FC614C2)
 I (..\USER\stm32f10x.h)(0x5FC614BF)
 I (..\CORE\core_cm3.h)(0x5FC6151B)
