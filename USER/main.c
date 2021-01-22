@@ -17,7 +17,6 @@ volatile bool which_buf = 0;
 volatile u8  send_flag = 1;
 volatile u16 str_len[2] = {0};
 u8 Buffer[2][SPI_BUF_LEN] = {0};
-const char send_cmd[16] = "AT+MIPSEND=1,\0";
 //const char str_OK[]="SEND OK";
 
 void ByteChange(register u8 *pBuf, s16 len)
@@ -48,8 +47,12 @@ void ML302_init()
 //	delay_ms(10);
 	printf("AT+CGACT=1,1\r\n");		//激活PDP
 	delay_ms(20);
-	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",45715\r\n");	//连接服务器
+	printf("AT+MIPOPEN=1,\"TCP\",\"server.natappfree.cc\",43328\r\n");	//连接服务器
+//		printf("AT+MIPOPEN=1,\"TCP\",\"47.104.157.10\",15884\r\n");	//连接服务器
 	delay_ms(20);
+	
+//	printf("AT+CMUX=0,0,6,127,10,3,30,10,2\r\n");	//波特率设置为230400
+	delay_ms(10);
 	printf("ATE0\r\n");				//关闭回显
 	delay_ms(10);
 	memset(USART_RX_BUF, 0, USART_REC_LEN);
@@ -81,17 +84,16 @@ void ML302_init()
 
 void uart_send_data_2_ML302(register u8 *TX_BUF, u16 len)
 {
-	char num_char[4];
-//	u16 t;
+	char num_char[5];
+	register u16 i;
 	sprintf(num_char, "%d", len);
-	printf("%s%s\r\n", send_cmd, num_char);
-	TX_BUF[len] = '\0';
-	printf("%s", TX_BUF);
-//	for(t=0; t<len; t++)
-//	{
-//		USART_SendData(USART1, *(TX_BUF + t));//向串口1发送数据
-//		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
-//	}
+	printf("AT+MIPSEND=1,%s\r\n", num_char);
+	//TX_BUF[len] = '\0';
+	//printf("%s", TX_BUF);
+	for(i=0; i<len; i++){
+		USART1->DR = TX_BUF[i];
+		while((USART1->SR&0X40)==0);//等待该字符发送完毕   
+	}
 }
 
 
@@ -118,7 +120,7 @@ int main(void)
 
 	delay_init();	    	 //延时函数初始化	  
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
-	uart_init(115200);	 	//串口初始化为115200	
+	uart_init(230400);	 	//串口初始化为230400
  	LED_Init();		  			//初始化与LED连接的硬件接口
 	//KEY_Init();					//初始化按键
 	uc8088_init();		//8088初始化
@@ -138,9 +140,13 @@ int main(void)
 	wp_stop_flag = 0;
 	IWDG_Init(5,625);    //与分频数为128,重载值为625,溢出时间为2s
 	send_flag = 1;
+
 	while(1){
-		if (send_flag == 2)
-				Resend();
+		if (send_flag == 2){
+				//Resend();
+				printf("\r\nThe return value is not 'OK'!\r\n");
+				send_flag = 1;
+		}
 
 		cnt = 0;
 		do
@@ -154,7 +160,7 @@ int main(void)
 					wp_OK = 0;
 					wp_stop_flag = 1;
 				}
-				else if((len + str_len[which_buf]) > 4096)
+				else if((len + str_len[which_buf]) > SPI_BUF_LEN)
 					wp_OK = 0;
 				else 
 					wp_OK = 1;
@@ -170,8 +176,8 @@ int main(void)
 		}while(1);
 		
 		if(rp_OK == 1 && wp_OK == 1){
-			LED1 = 1;
-			//printf("rp_OK = %d, wp_OK = %d, rpp = %d,  rp = %d,  wp = %d\r\n",rp_OK, wp_OK, rrp, rp, wp);
+			LED1 = 0;
+			printf("    rp = %d,  wp = %d\r\n", rp, wp);
 			
 			if (rp < wp){
 				tmp = uc8088_read_memory(Buf_addr + 8 + rp, Buffer[which_buf] + str_len[which_buf], len);
@@ -224,9 +230,9 @@ int main(void)
 			IWDG_Feed();		//喂狗
 		}
 		
-		if(wp_stop_flag)
+		if(wp_stop_flag)		//空闲
 		{
-			LED1 = 0;				//空闲
+			LED1 = 1;
 			wp_stop_flag = 0;
 			IWDG_Feed();		//喂狗
 		}
